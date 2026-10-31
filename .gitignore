@@ -1,0 +1,5 @@
+.sites-local/
+node_modules/
+artifacts/
+*-sample.json
+__pycache__/
