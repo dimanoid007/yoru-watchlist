@@ -1,6 +1,5 @@
-import {available,count,watch} from './model.js';
-export function beginWatching(state,title,sourceUrl,now=Date.now()){
- const episode=count(state,title.id)+1;
+import {available,count,watch,episodeWatched,nextEpisode} from './model.js?v=4';
+export function beginWatching(state,title,sourceUrl,now=Date.now(),episode=nextEpisode(state,title.id)){
  const limit=available(title,now);
  if(limit!==null&&episode>limit)return {ok:false,reason:'Все вышедшие серии уже отмечены'};
  state.activeWatch={titleId:title.id,episode,sourceUrl,startedAt:new Date(now).toISOString()};
@@ -9,16 +8,18 @@ export function beginWatching(state,title,sourceUrl,now=Date.now()){
 }
 export function syncWatchSession(state,title){
  if(state.activeWatch?.titleId!==title.id)return;
- const next=count(state,title.id)+1,limit=available(title);
- if(limit!==null&&next>limit)state.activeWatch=null;
- else state.activeWatch.episode=next;
+ const limit=available(title);
+ if(limit!==null&&count(state,title.id)>=limit){state.activeWatch=null;return;}
+ if(episodeWatched(state,title.id,state.activeWatch.episode)){
+  const following=state.activeWatch.episode+1;
+  state.activeWatch.episode=(limit===null||following<=limit)&&!episodeWatched(state,title.id,following)?following:nextEpisode(state,title.id);
+ }
 }
 export function completeWatching(state,title,expectedEpisode,now=Date.now()){
- if(!state.activeWatch||state.activeWatch.titleId!==title.id||state.activeWatch.episode!==expectedEpisode||count(state,title.id)+1!==expectedEpisode){
-  syncWatchSession(state,title);
+ if(!state.activeWatch||state.activeWatch.titleId!==title.id||state.activeWatch.episode!==expectedEpisode){
   return {ok:false,reason:'Прогресс уже изменился. Проверьте номер текущей серии.'};
  }
- const result=watch(state,title,now);
+ const result=watch(state,title,now,expectedEpisode);
  if(result.ok)syncWatchSession(state,title);
  return result;
 }

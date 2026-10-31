@@ -47,20 +47,3 @@ export function animeSearchUrl(query,filters,page=1){
  if(filters.minScore)params.set('score',String(filters.minScore));
  return 'https://shikimori.io/api/animes?'+params;
 }
-const PLATFORMS=[
- ['crunchyroll.com','Crunchyroll'],['netflix.com','Netflix'],['kinopoisk.ru','Кинопоиск'],
- ['tv.apple.com','Apple TV'],['primevideo.com','Prime Video'],['hulu.com','Hulu'],
- ['disneyplus.com','Disney+'],['max.com','Max'],['hbomax.com','HBO Max'],['hbo.com','HBO'],
- ['ivi.ru','Иви'],['okko.tv','Okko'],['wink.ru','Wink'],['start.ru','START'],['premier.one','PREMIER'],
-];
-export function officialPlatform(url){try{const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password)return null;return PLATFORMS.find(([domain])=>u.hostname===domain||u.hostname.endsWith('.'+domain))?.[1]||null;}catch{return null;}}
-export function officialSources(title){
- const links=[];
- for(const source of title.officialSources||[]){const name=officialPlatform(source.url);if(name)links.push({name,url:source.url,label:source.label||`Страница на ${name}`,direct:true});}
- if(title.officialSite){const name=officialPlatform(title.officialSite);if(name)links.push({name,url:title.officialSite,label:title.streamingName||name,direct:true});}
- const name=encodeURIComponent(title.original&&title.original!=='Добавлено вами'?title.original:title.title);
- if(title.kind==='anime')links.push({name:'Crunchyroll',url:'https://www.crunchyroll.com/search?q='+name,label:'Найти на Crunchyroll'});
- links.push({name:'Кинопоиск',url:'https://www.kinopoisk.ru/index.php?kp_query='+encodeURIComponent(title.title),label:'Найти на Кинопоиске'});
- if(title.kind==='tv')links.push({name:'Netflix',url:'https://www.netflix.com/search?q='+name,label:'Найти на Netflix'});
- return links.filter((s,i,all)=>all.findIndex(v=>v.name===s.name)===i);
-}
